@@ -11,7 +11,26 @@ app.use(express.json());
 app.use("/customer",session({secret:"fingerprint_customer",resave: true, saveUninitialized: true}))
 
 app.use("/customer/auth/*", function auth(req,res,next){
-//Write the authenication mechanism here
+  let userJwt;
+  if (req?.headers?.authorization.startsWith("Bearer ")){
+    userJwt = req?.headers?.authorization.substring(7);
+  }
+  console.log('userJwt', userJwt)
+
+  if (userJwt) {
+    return jwt.verify(userJwt, "access", (err, user) => {
+      if (!err) {
+        req.user = user;
+        console.log('req?.session', user)
+        next();
+      } else {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+    });
+  }
+  return res
+    .status(401)
+    .json({ message: "User not authenticated" });
 });
  
 const PORT =5000;
